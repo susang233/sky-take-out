@@ -8,9 +8,6 @@
             <foreach collection="flavors" item="df" separator=",">
                 (#{df.dishId},#{df.name},#{df.value})
             </foreach>
-
-
-
     </insert>
     <delete id="deleteByDishIds">
         delete

@@ -30,14 +30,24 @@
         <jjwt>0.9.1</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
         <poi>3.16</poi>
+        <junit>1.8.2</junit>
     </properties>
     <dependencyManagement>
+
+
         <dependencies>
             <dependency>
                 <groupId>org.mybatis.spring.boot</groupId>
                 <artifactId>mybatis-spring-boot-starter</artifactId>
                 <version>${mybatis.spring}</version>
             </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-launcher</artifactId>
+                <version>${junit}</version>
+                <scope>test</scope>
+            </dependency>
+
 
             <dependency>
                 <groupId>org.projectlombok</groupId>
