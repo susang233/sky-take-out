@@ -32,7 +32,7 @@ public class UserController {
     private JwtProperties jwtProperties;
     @PostMapping("/login")
     @ApiOperation("用户登录")
-    private Result<UserLoginVO> login(@RequestBody UserLoginDTO userLoginDTO){
+    public Result<UserLoginVO> login(@RequestBody UserLoginDTO userLoginDTO){
         log.info("微信用户登录{}",userLoginDTO.getCode());
 
         //微信登录

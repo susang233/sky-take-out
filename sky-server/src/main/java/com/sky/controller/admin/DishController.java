@@ -11,9 +11,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @Api(tags = "菜品接口")
@@ -22,6 +24,8 @@ import java.util.List;
 public class DishController {
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
@@ -31,9 +35,11 @@ public class DishController {
      */
     @PostMapping
     @ApiOperation("新增菜品")
-    private Result save(@RequestBody DishDTO dishDTO) {
+    public Result save(@RequestBody DishDTO dishDTO) {
         log.info("新增菜品{}", dishDTO);
         dishService.saveWithFlavor(dishDTO);
+        String key="dish_"+dishDTO.getCategoryId();
+        cleanCache(key);
         return Result.success();
     }
 
@@ -44,7 +50,7 @@ public class DishController {
      */
     @GetMapping("/page")
     @ApiOperation("菜品分页查询")
-    private Result<PageResult> page(DishPageQueryDTO dishPageQueryDTO){
+    public Result<PageResult> page(DishPageQueryDTO dishPageQueryDTO){
         log.info("菜品分页查询{}",dishPageQueryDTO);
         PageResult pageResult=dishService.pageQuery(dishPageQueryDTO);
 
@@ -58,9 +64,10 @@ public class DishController {
      */
     @DeleteMapping
     @ApiOperation("批量删除菜品")
-    private Result delete(@RequestParam List<Long> ids){//@RequestParam可以自动把收到的以逗号分隔的参数变成数组
+    public Result delete(@RequestParam List<Long> ids){//@RequestParam可以自动把收到的以逗号分隔的参数变成数组
         log.info("批量删除菜品{}",ids);
         dishService.deleteBatch(ids);
+        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -71,7 +78,7 @@ public class DishController {
      */
     @GetMapping("/{id}")
     @ApiOperation("根据id查询菜品")
-    private Result<DishVO> getById(@PathVariable Long id){
+    public Result<DishVO> getById(@PathVariable Long id){
         log.info("根据id查询菜品");
         DishVO dishVO=dishService.getByIdWithFlavor(id);
         return Result.success(dishVO);
@@ -79,15 +86,16 @@ public class DishController {
 
     @PutMapping
     @ApiOperation("修改菜品")
-    private Result update(@RequestBody DishDTO dishDTO){
+    public Result update(@RequestBody DishDTO dishDTO){
         log.info("修改菜品{}",dishDTO);
         dishService.updateWithFlavor(dishDTO);
+        cleanCache("dish_*");
         return Result.success();
     }
 
     @GetMapping("/list")
     @ApiOperation("根据分类id查询菜品")
-    private Result list(Long categoryId){
+    public Result list(Long categoryId){
         List<Dish> list =dishService.list(categoryId);
 
         return Result.success(list);
@@ -95,11 +103,17 @@ public class DishController {
 
     @PostMapping("/status/{status}")
     @ApiOperation("停售启售菜品")
-    private Result startOrStop(@PathVariable Integer status,Long id){
+    public Result startOrStop(@PathVariable Integer status,Long id){
         log.info("停售启售套餐status{},id{}",status,id);
         dishService.startOrStop(status,id);
+        cleanCache("dish_*");
 
         return Result.success();
+    }
+
+    private void cleanCache(String pattern){
+        Set keys=redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
     }
 
 }
