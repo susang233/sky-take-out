@@ -1,5 +1,6 @@
 package com.sky.interceptor;
 
+import com.aliyun.oss.HttpMethod;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.context.BaseContext;
 import com.sky.properties.JwtProperties;
@@ -19,43 +20,50 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Component
 @Slf4j
-public class JwtTokenUserInterceptor implements HandlerInterceptor {
 
-    @Autowired
-    private JwtProperties jwtProperties;
 
-    /**
-     * 校验jwt
-     *
-     * @param request
-     * @param response
-     * @param handler
-     * @return
-     * @throws Exception
-     */
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        //判断当前拦截到的是Controller的方法还是其他资源
-        if (!(handler instanceof HandlerMethod)) {
-            //当前拦截到的不是动态方法，直接放行
-            return true;
-        }
 
-        //1、从请求头中获取令牌
-        String token = request.getHeader(jwtProperties.getUserTokenName());
+    public class JwtTokenUserInterceptor implements HandlerInterceptor {
 
-        //2、校验令牌
-        try {
-            log.info("jwt校验:{}", token);
-            Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), token);
-            Long userId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
-            log.info("当前用户id：{}", userId);
-            BaseContext.setCurrentId(userId);
-            //3、通过，放行
-            return true;
-        } catch (Exception ex) {
-            //4、不通过，响应401状态码
-            response.setStatus(401);
-            return false;
+        @Autowired
+        private JwtProperties jwtProperties;
+
+        /**
+         * 校验jwt
+         *
+         * @param request
+         * @param response
+         * @param handler
+         * @return
+         * @throws Exception
+         */
+        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+            // 输出当前线程的ID
+            System.out.println("当前线程的ID：" + Thread.currentThread().getId());
+
+            //判断当前拦截到的是Controller的方法还是其他资源
+            if (!(handler instanceof HandlerMethod)) {
+                //当前拦截到的不是动态方法，直接放行
+                return true;
+            }
+
+            //1、从请求头中获取令牌
+            String token = request.getHeader(jwtProperties.getUserTokenName());
+
+            //2、校验令牌
+            try {
+                log.info("jwt校验:{}", token);
+                Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), token);
+                Long userId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
+                // 将empId存储在当前ThreadLocal中（线程局部变量存储空间，具有线程隔离的效果）
+                BaseContext.setCurrentId(userId);
+                log.info("当前用户id：{}", userId);
+                //3、通过，放行
+                return true;
+            } catch (Exception ex) {
+                //4、不通过，响应401状态码
+                response.setStatus(401);
+                return false;
+            }
         }
     }
-}
